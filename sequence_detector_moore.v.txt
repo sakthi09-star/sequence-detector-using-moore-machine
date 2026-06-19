@@ -1,0 +1,51 @@
+module sequence_detector_moore(
+    output reg det_out,
+    input seq_in,
+    input clk,
+    input rst
+);
+
+    reg [2:0] present, next;
+
+    parameter IDLE = 3'b000;
+    parameter S1   = 3'b001;
+    parameter S2   = 3'b010;
+    parameter S3   = 3'b011;
+    parameter S4   = 3'b100; // DETECT STATE
+
+    // State register
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            present <= IDLE;
+        else
+            present <= next;
+    end
+
+    // Next state logic
+    always @(*) begin
+        case (present)
+
+            IDLE: next = seq_in ? S1 : IDLE;
+
+            S1:   next = seq_in ? S2 : IDLE;
+
+            S2:   next = seq_in ? S3 : IDLE;
+
+            S3:   next = seq_in ? S4 : IDLE;
+
+          S4: next = seq_in ? S1 : IDLE; // stay once detected
+
+            default: next = IDLE;
+
+        endcase
+    end
+
+    // Moore output (only depends on state)
+    always @(*) begin
+        case (present)
+            S4: det_out = 1'b1;
+            default: det_out = 1'b0;
+        endcase
+    end
+
+endmodule
